@@ -1,0 +1,233 @@
+
+#box { margin:0px; width:100%; text-align:left; border:0px solid red; FONT-FAMILY: 'Arial', Arial, sans-serif;}
+
+#topMenu {
+	PADDING-LEFT: 0px; position:relative; MARGIN: 0px; WIDTH: 100%; FONT-FAMILY: 'Arial', Arial, sans-serif; 
+	COLOR: #ffffff; HEIGHT: 118px; background-image:url(imetrixlogo.gif); background-repeat:no-repeat;
+}
+#headerToolbar {
+	background-color:#183152;
+	border-bottom: #375d81 0px solid;
+	border-left:1px solid #183152;
+	border-right:1px solid #183152;
+	bottom:0px;
+	COLOR: #ffffff;
+	HEIGHT: 38px;
+	LEFT: 0px;
+	MARGIN: 0px;
+	POSITION: absolute;
+	WIDTH:100%;
+	Z-INDEX: 1;
+}
+#headerToolbar TD {
+	FONT: 15px Arial, sans-serif; VERTICAL-ALIGN: middle; COLOR: #ffffff; HEIGHT: 30px;
+}
+#headerToolbar TD.spacer {
+	PADDING-RIGHT: 12px; PADDING-LEFT: 12px; FONT: 15px Arial, sans-serif; VERTICAL-ALIGN: top; COLOR: #183152; HEIGHT: 30px
+}
+#headerToolbar TD.selected1 {
+	font: 15px Arial, sans-serif; padding-left:10px;
+	vertical-align: middle; color: #ffffff;height: 35px
+}
+
+#footer { height:30px; font-size:8pt; border:0px solid red; text-align:center; 
+          line-height:30px;FONT-FAMILY: 'Arial', Arial, sans-serif;}
+.link{
+	FONT: 11pt Arial, sans-serif;  COLOR: #183152; PADDING-TOP: 1px; text-decoration:underline;
+}
+.imetrixTitle
+{
+    vertical-align:top; font:12pt Arial, sans-serif; margin-right:0px; font-weight:bold; margin-top:5px; color:#183152;
+    border:0px solid black; width:250px; float:right; text-align:right;}
+.imetrixTitle a:hover
+{ FONT: 0.8em Arial, sans-serif; VERTICAL-ALIGN: top; COLOR:#419638; HEIGHT: 30px; TEXT-DECORATION: none }
+
+.compInfo
+{ color:#183152; border:0px solid black; width:90%; position:absolute; top:50px;
+  font-family:Arial, Sans-Serif; font-size:9pt; font-weight:bold;}
+
+.linkSelected
+{ FONT: 12px Arial, sans-serif !important; VERTICAL-ALIGN: top !important; COLOR: #183152 !important; HEIGHT: 30px !important; font-weight:bold !important;
+  text-decoration:underline !important;}
+
+.linkNotSelected
+{ FONT: 12px Arial, sans-serif !important; VERTICAL-ALIGN: top !important; COLOR: #183152 !important; HEIGHT: 30px !important; TEXT-DECORATION: none !important; }
+
+.notSelected  { margin-left:4px !important;margin-top:0px !important;height:20px !important;position:relative !important;float:left !important;white-space:nowrap !important;
+                }
+.selected { margin-left:4px !important;  margin-top:0px !important; height:20px !important; position:relative !important;float:left !important; white-space:nowrap !important;
+     }
+.reportLink
+{ FONT: 12px Arial, sans-serif; VERTICAL-ALIGN: top; COLOR: #183152; HEIGHT: 30px; TEXT-DECORATION: none; }
+.uppernotselected { margin-left:4px; margin-top:13px; height:20px;position:relative;  float:left;
+    white-space:nowrap;border:0px solid yellow; }
+.upperselected
+{
+    BACKGROUND-REPEAT: no-repeat;
+    BACKGROUND-POSITION: left bottom; 
+    BACKGROUND-IMAGE: url(newtopToolbarSelector.gif);
+    margin-left:4px;
+    margin-top:13px;
+    height:25px;
+    position:relative;
+    float:left;
+    white-space:nowrap; border:0px solid yellow;
+}
+
+.upperlinkNotSelected
+{ FONT: 14px Arial, sans-serif !important; VERTICAL-ALIGN: top !important; COLOR: #ffffff !important; HEIGHT: 30px !important; TEXT-DECORATION: none !important; }
+.upperlinkSelected
+{ FONT: 14px Arial, sans-serif !important; VERTICAL-ALIGN: top !important; font-weight:bold !important; COLOR: #ffffff !important; HEIGHT: 30px !important; TEXT-DECORATION: none !important; }
+
+.upperlinkNotSelected:hover
+{
+    color:#d5d4d4 !important;
+}
+
+.uppernavNotSelected
+{ FONT: 0.8em Arial, sans-serif !important; VERTICAL-ALIGN: top !important; COLOR: #183152 !important; HEIGHT: 30px !important; TEXT-DECORATION: none !important; }
+.uppernavSelected
+{ FONT: 0.8em Arial, sans-serif !important; VERTICAL-ALIGN: top !important; font-weight:bold !important; COLOR: #183152 !important; HEIGHT: 30px !important; TEXT-DECORATION: none !important; }
+
+
+.upperupload
+{
+   Z-INDEX: 1; right: 10px; MARGIN: 0px; WIDTH: 85px;
+   POSITION: absolute; bottom:0px; HEIGHT: 23px;
+}
+.dropDiv
+{
+    position:absolute; top:0px; height:30px; width:auto;
+}
+
+.uppermenulinks
+{
+    position:absolute; right:10px;
+}
+
+#mainmenu
+{
+   BACKGROUND-COLOR: #abc8e2;
+    border-left:1px solid #abc8e2;
+	border-right:1px solid #abc8e2;
+	border-bottom:1px solid #375d81;
+    COLOR: #375d81; 
+    FONT-FAMILY: Arial, sans-serif; 
+    MARGIN: 0px; 
+    overflow:hidden; /* to fix the height problem in firefox */
+    PADDING-LEFT:0px;
+    padding-right:0px;
+    position:relative;
+}
+
+#menu
+{
+    Z-INDEX: 1; 
+    LEFT: 0px; 
+    MARGIN: 0px; 
+    WIDTH: 100%; 
+    POSITION: relative;
+    BACKGROUND-COLOR: #abc8e2;
+    font-size:8pt;
+    padding-top:7px;
+}
+
+.subcontainer
+{
+    display:none;
+    width:100%;
+    border:0px solid red;
+    padding-left:0px;
+}
+
+#container
+{
+	width:100%;
+}
+
+.xbrldocument
+{
+    width:100%; height:35px; line-height:35px; background-color:#abc8e2;
+    color:#183152; padding-left:5px; font-size:115%;
+}
+
+#theToolTip
+{
+	background-color: #e3f0fc;
+	border: 2px solid #00457c;
+	filter: progid:DXImageTransform.Microsoft.Shadow(color=gray,direction=135,strength=5);
+	font-size: 0.7em;
+	left: -300px;
+	overflow: hidden;
+	padding: 0px 0px 10px 0px;
+	position: absolute;
+	text-align: left;
+	visibility: hidden;
+	width: 550px;
+	z-index: 100;
+}
+
+#ToolTipPointer{
+position:absolute;
+left: -300px;
+z-index: 101;
+visibility: hidden;
+}
+#theToolTip p{
+font-size: 0.6em;
+color: Black;
+line-height:1.8em;
+margin-right:10px;
+margin-top:0;
+}
+#ToolTipTextWrap {
+font-weight:normal;
+font-size: 0.6em;
+color: #333333;
+margin-right:10px;
+}
+
+.subcontainerNotSelected
+{
+	display:none;
+}
+
+.subcontainerSelected
+{
+	display:block;
+}
+
+.linkBold
+{
+	font-weight:bold;
+}
+
+@-webkit-keyframes in {
+  0% { -webkit-transform: scale(0) rotate(2deg); opacity: 0; visibility: hidden;  }
+  100% { -webkit-transform: scale(1) rotate(0); opacity: 1; visibility: visible; }
+}
+
+@keyframes in {
+  0% { transform: scale(0) rotate(2deg); opacity: 0; visibility: hidden;  }
+  100% { transform: scale(1) rotate(0); opacity: 1; visibility: visible; }
+}
+
+@-webkit-keyframes out {
+  0% { -webkit-transform: scale(1) rotate(0); opacity: 1; visibility: visible; }
+  100% { -webkit-transform: scale(0) rotate(-12deg); opacity: 0; visibility: hidden; }
+}
+
+@keyframes out {
+  0% { transform: scale(1) rotate(0); opacity: 1; visibility: visible; }
+  100% { transform: scale(0) rotate(-12deg); opacity: 0; visibility: hidden;  }
+}
+
+.show {
+  -webkit-animation: in 400ms ease both;
+  animation: in 400ms ease both;
+}
+
+.hide {
+  -webkit-animation: in 200ms ease both;
+  animation: in 200ms ease both;
+}

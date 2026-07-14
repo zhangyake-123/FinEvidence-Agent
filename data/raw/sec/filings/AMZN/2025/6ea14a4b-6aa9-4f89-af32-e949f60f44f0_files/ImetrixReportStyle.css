@@ -1,0 +1,384 @@
+﻿
+.IMetrixFont
+{
+	font-family:Arial Narrow, Arial, Helvetica, Sans-Serif;
+}
+
+.IMetrixTable
+{
+	border-style:none;
+	border-width:0px;		
+}
+
+table.IMetrixTableTdNoPadding td
+{
+	padding:0px;
+	border-spacing:0px;
+	font-size:10pt;	
+	vertical-align:top;
+}
+
+table.IMetrixTableTdInner td
+{
+	border-spacing:2px;	
+	font-size:10pt;	
+	vertical-align:top;
+}
+
+sup
+{
+	line-height: 1;
+	vertical-align: baseline;
+	position: relative;
+	bottom: 1ex;
+}
+
+
+PreElement
+{
+font-size:10pt;
+}
+
+.DataPointTag
+{
+font-size::medium;
+height:40;
+font-size:10pt;
+}
+
+.AlternatingRowColorLight
+{
+	border-top:1px solid #bad5ed;
+}
+
+.AlternatingRowColorDark {	background-color:#e9f4fe;	border-top:1px solid #bad5ed;}
+.ValueColumnWidth
+{
+	 border-left:1px solid white;
+	text-align:center;
+	padding-right:8px;
+}
+
+.ValueColumnData{    border-left:1px solid white;    padding-left:5px;}.ValueColumnText
+{
+    border-left:1px solid white;    padding-left:5px;}
+
+.ValueColumn
+{
+	text-align:center;
+}
+
+.LabelColumnTd
+{
+	min-width:300px;
+	max-width:500px;
+}
+
+
+.stmt .LabelColumnTd
+{
+    width:400px;
+}
+
+.nd .LabelColumnTd
+{
+    width:400px;
+}
+
+.LabelColumn
+{
+	text-align:left;
+	padding-left:10px;
+	padding-bottom:3px;
+}
+
+.LinkbaseTitleCell
+{
+font-size:13pt;
+text-align:left;
+height:50;
+vertical-align:middle;
+font-weight:bold;
+}
+
+.FootnoteTitleCell
+{
+font-size:11pt;
+text-align:left;
+vertical-align:middle;
+font-weight:bold;
+}
+
+.PageBreak
+{
+page-break-before:always;
+display:none;
+}
+
+.HeaderSplit
+{
+border-top-width:0px;
+border-top-style:solid;
+border-top-color:Gray;
+}
+
+.HeaderFont
+{
+font-weight:normal;
+}
+
+.HeaderLast
+{
+border-bottom-width:0px;
+border-bottom-style:solid;
+border-bottom-color:Gray;
+}
+
+.HeaderBackground
+{
+background-color: #acf;color: #000000;text-align:center;font-size:9pt;height:20px;
+font-weight:normal;}
+
+.HeaderTd
+{
+vertical-align:middle;
+text-align:left;
+padding-left:8px;
+line-height:20px;
+height:22px;
+}
+
+.HeaderTdRight
+{
+vertical-align:middle;
+text-align:right;
+padding-right:8px;
+line-height:20px;
+font-size:9pt;
+}
+
+.NoWrap
+{
+white-space:nowrap;
+}
+
+.HorzAlignText
+{
+text-align:left;
+}
+
+.HorzAlignBoolean
+{
+text-align:center;
+}
+
+.HorzAlignNumeric
+{
+text-align:right;
+padding-right:6px;
+/*cursor:pointer;*/
+}
+
+.Total
+{
+	/*border-top-width:1px;
+	border-top-style:solid;
+	border-top-color:Black;*/
+	border-bottom-width:1px;
+	border-bottom-style:solid;
+	border-bottom-color:Black;
+}
+
+.SubTotal
+{
+	border-bottom-width:1px;
+	border-bottom-style:solid;
+	border-bottom-color:Black;
+}
+
+.GeneralFormatRow
+{
+border-bottom-width: 0px;
+border-bottom-style: solid;
+border-bottom-color: #DBE5F1;
+}
+
+.AsReportedItemRow
+{
+color:Blue;
+font-size:8pt;
+border-bottom-width: 0px;
+border-bottom-style: solid;
+border-bottom-color: #DBE5F1;
+}
+
+.AbstractFormatRow
+{
+font-weight: bold;
+}
+
+.TextBlockLabel
+{
+font-size:11pt;
+text-decoration:none;
+vertical-align:middle;
+height:40px;
+font-weight:bold;
+padding-left:7px;
+}
+
+.TextBlockValue
+{
+    white-space:normal;
+    padding:7px;
+}
+
+.DatapointInfoLastRow
+{
+border-bottom-width:1;
+border-bottom-style:solid;
+border-bottom-color:Gray;
+}
+
+.DatapointInfoHeader
+{
+font-weight:bold;
+}
+
+.DimensionLabelFormatRow
+{
+font-weight: bold;
+border-bottom-width: 1px;
+border-bottom-style: solid;
+border-bottom-color: #DBE5F1;
+background-color: #B8CCE4;
+}
+
+.hideelement
+{
+display:none;
+}
+
+.StandardTable
+{
+width:1000px;
+border-width:1px;
+border:1px;
+font-size:12px;
+}
+
+.ViewerTable
+{
+	width:100%;
+	border-spacing:0px;
+	font-size:12px;
+    border:2px solid #acf;
+}
+
+.stmt .ViewerTable
+{
+    width:auto;
+	border-spacing:0px;
+	font-size:12px;
+}
+
+.nd .ViewerTable
+{
+    width:auto;
+	border-spacing:0px;
+	font-size:12px;
+}
+
+.PeriodHeaderDuration
+{
+	border-bottom: 1px solid white;
+}
+
+.ToolTipTable
+{
+	width:97%;
+	font-size:8pt;
+}
+
+.ToolTipTable tr
+{
+	height:10px;
+	letter-spacing:0px;
+	font-family:Arial, Sans-Serif;
+}
+
+.ToolTipTable td
+{
+	vertical-align:top;	
+}
+
+.tooltipmaintitle
+{
+	width:100%;
+	height:20px;
+	line-height:20px;
+	background:#00457c;
+	color:white;
+	font-weight:bold;
+	font-size:9pt;
+	padding:2px;
+}
+
+.tooltiptitle
+{
+	color:Blue;
+}
+
+.BackToTop
+{
+color:Black;
+font-size:7pt;
+text-decoration:underline;
+letter-spacing:1px;
+}
+
+.clickToolTip
+{
+    float:left;
+}
+
+/*Inline styles override*/
+.PeriodHeaderData
+{
+	vertical-align:bottom;
+	text-align:center;
+}
+
+.PeriodHeader
+{
+	vertical-align:bottom;
+	text-align:left;
+}
+
+.ValueColumnWidthPivoted
+{
+	width:10%;
+}
+
+.PeriodRowFormatRow
+{
+	font-weight: bold;
+}
+
+.PropertiesColumn
+{
+	text-align:center;
+}
+
+.tooltipRowLabel
+{
+	font-weight: normal;
+	color: #43588F;
+	white-space:nowrap;
+}
+
+.tooltipRowValue
+{
+	font-weight: normal;
+	color: #000000;
+}

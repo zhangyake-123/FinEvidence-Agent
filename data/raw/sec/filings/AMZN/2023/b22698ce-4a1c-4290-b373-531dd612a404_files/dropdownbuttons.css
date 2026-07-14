@@ -1,0 +1,47 @@
+﻿div.min800wide { min-width: 1000px; } /* sets min-width value for all standards-compliant browsers */ 
+
+.eol-button { outline: 0; margin: .5em .5em 0 0; padding: .4em 1em; text-decoration:none !important; cursor:pointer; position: relative; text-align: center; zoom: 1; }
+.eol-button .ui-icon { position: absolute; top: 50%; margin-top: -8px; left: 50%; margin-left: -8px; }
+a.eol-button { float:left; }
+
+/* remove extra button width in IE */
+button.eol-button { width:auto; overflow:visible; }
+
+/* .eol-menu-button { outline: 0; margin: 2em 0 2em -13px; padding: .4em 1em; width: 100%; text-decoration:none !important; cursor:pointer; position: relative; text-align: left; zoom: 1; } */
+.eol-menu-button { outline: 0; margin: .5em 5px 0 -6px; padding: .4em ; text-decoration:none !important; cursor:pointer; position: relative; text-align: left; zoom: 1; width: 100%; }
+a.eol-menu-button { float:left; }
+
+/* remove extra button width in IE */
+button.eol-menu-button { width:auto; overflow:visible; }
+
+.eol-button-icon-left { padding-left: 2.1em; }
+.eol-button-icon-right { padding-right: 1.5em; }
+.eol-button-icon-left .ui-icon { right: auto; left: .2em; margin-left: 0; }
+.eol-button-icon-right .ui-icon { left: auto; right: .2em; margin-left: 0; }
+.eol-button-icon-super { padding-right: 1.1em; }
+.eol-button-icon-super .ui-icon { left: auto; right: .1em; top: .6em; margin-left: 0; }
+
+.eol-icon1 {  }
+.eol-icon1 .ui-icon {left: .1em; right: auto; margin-left: 0px; }
+.eol-icon2 { padding-right: 2em;  }
+.eol-icon2 .ui-icon {left: auto; right: .1em; margin-left: 8px; }
+
+.eol-button-icon-solo { display:block; width:8px; text-indent: -9999px; }	 /* solo icon buttons must have block properties for the text-indent to work */	
+
+.eol-buttonset { float:left; }
+.eol-buttonset .eol-button { float: left; }
+.eol-buttonset-single .eol-button, 
+.eol-buttonset-multi .eol-button { margin-right: -1px;}
+.eol-buttonset-group .eol-button { margin-right: -1px;}
+
+.eol-toolbar { padding: .2em; margin: 0; display: inline-block; }
+.eol-toolbar .eol-buttonset { margin-right: 0em; margin-left: 0em; padding-left: 1px; }
+.eol-toolbar .eol-buttonset-group { margin-right:.5em; }
+.eol-toolbar .eol-button { font-size: 1em; margin-top: 0em}
+.ui-dialog { background-color: White; background-image: none; font-size: 12px;  }
+.ui-dialog .ui-state-highlight, .ui-dialog .ui-state-error { padding: .3em;  }
+.ui-dialog-buttonpane { background-color: White; }
+.ui-widget-overlay { background: none; background-color: #aaaaaa; opacity: 30; filter:Alpha(Opacity=30); }
+
+.roundMenu td { white-space: nowrap;}
+

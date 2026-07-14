@@ -1,0 +1,8 @@
+﻿body
+{
+    /*visibility:hidden;*/
+}
+
+.print { visibility:visible;display:block; }
+
+.dontprint { visibility:hidden;display:none; }

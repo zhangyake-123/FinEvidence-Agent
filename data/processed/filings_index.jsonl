@@ -1,0 +1,35 @@
+{"ticker": "AAPL", "company": null, "fiscal_year": 2021, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AAPL/2021/Apple Inc. (Form_ 10-K, Received_ 10_29_2021 06_02_43).html"}
+{"ticker": "AAPL", "company": null, "fiscal_year": 2022, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AAPL/2022/Apple Inc. (Form_ 10-K, Received_ 10_28_2022 06_02_17).html"}
+{"ticker": "AAPL", "company": null, "fiscal_year": 2023, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AAPL/2023/Apple Inc. (Form_ 10-K, Received_ 11_03_2023 06_02_32).html"}
+{"ticker": "AAPL", "company": null, "fiscal_year": 2024, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AAPL/2024/Apple Inc. (Form_ 10-K, Received_ 11_01_2024 06_05_37).html"}
+{"ticker": "AAPL", "company": null, "fiscal_year": 2025, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AAPL/2025/Apple Inc. (Form_ 10-K, Received_ 10_31_2025 06_07_30).html"}
+{"ticker": "AMZN", "company": null, "fiscal_year": 2021, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AMZN/2021/5a60b19f-08ef-4231-ad6a-f4810eb38769.html"}
+{"ticker": "AMZN", "company": null, "fiscal_year": 2021, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AMZN/2021/5a60b19f-08ef-4231-ad6a-f4810eb38769_files/blank.html"}
+{"ticker": "AMZN", "company": null, "fiscal_year": 2022, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AMZN/2022/baeda12d-f366-4c88-8fec-3b758e73a3cd.html"}
+{"ticker": "AMZN", "company": null, "fiscal_year": 2022, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AMZN/2022/baeda12d-f366-4c88-8fec-3b758e73a3cd_files/blank.html"}
+{"ticker": "AMZN", "company": null, "fiscal_year": 2023, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AMZN/2023/b22698ce-4a1c-4290-b373-531dd612a404.html"}
+{"ticker": "AMZN", "company": null, "fiscal_year": 2023, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AMZN/2023/b22698ce-4a1c-4290-b373-531dd612a404_files/blank.html"}
+{"ticker": "AMZN", "company": null, "fiscal_year": 2024, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AMZN/2024/97706586-53f4-4ede-889d-4d82777e75c4.html"}
+{"ticker": "AMZN", "company": null, "fiscal_year": 2024, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AMZN/2024/97706586-53f4-4ede-889d-4d82777e75c4_files/blank.html"}
+{"ticker": "AMZN", "company": null, "fiscal_year": 2025, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AMZN/2025/6ea14a4b-6aa9-4f89-af32-e949f60f44f0.html"}
+{"ticker": "AMZN", "company": null, "fiscal_year": 2025, "filing_type": "10-K", "source_path": "data/raw/sec/filings/AMZN/2025/6ea14a4b-6aa9-4f89-af32-e949f60f44f0_files/blank.html"}
+{"ticker": "MSFT", "company": null, "fiscal_year": 2021, "filing_type": "10-K", "source_path": "data/raw/sec/filings/MSFT/2021/SEC Filing _ Microsoft Corporation.html"}
+{"ticker": "MSFT", "company": null, "fiscal_year": 2022, "filing_type": "10-K", "source_path": "data/raw/sec/filings/MSFT/2022/SEC Filing _ Microsoft Corporation.html"}
+{"ticker": "MSFT", "company": null, "fiscal_year": 2023, "filing_type": "10-K", "source_path": "data/raw/sec/filings/MSFT/2023/SEC Filing _ Microsoft Corporation.html"}
+{"ticker": "MSFT", "company": null, "fiscal_year": 2024, "filing_type": "10-K", "source_path": "data/raw/sec/filings/MSFT/2024/SEC Filing _ Microsoft Corporation.html"}
+{"ticker": "MSFT", "company": null, "fiscal_year": 2025, "filing_type": "10-K", "source_path": "data/raw/sec/filings/MSFT/2025/SEC Filing _ Microsoft Corporation.html"}
+{"ticker": "NVDA", "company": null, "fiscal_year": 2021, "filing_type": "10-K", "source_path": "data/raw/sec/filings/NVDA/2021/61f98b6a-7f88-4abd-8ff9-62c65d96930b.html"}
+{"ticker": "NVDA", "company": null, "fiscal_year": 2021, "filing_type": "10-K", "source_path": "data/raw/sec/filings/NVDA/2021/61f98b6a-7f88-4abd-8ff9-62c65d96930b_files/blank.html"}
+{"ticker": "NVDA", "company": null, "fiscal_year": 2022, "filing_type": "10-K", "source_path": "data/raw/sec/filings/NVDA/2022/2ad64e9c-4d1a-4011-965f-97da45a2b042.html"}
+{"ticker": "NVDA", "company": null, "fiscal_year": 2022, "filing_type": "10-K", "source_path": "data/raw/sec/filings/NVDA/2022/2ad64e9c-4d1a-4011-965f-97da45a2b042_files/blank.html"}
+{"ticker": "NVDA", "company": null, "fiscal_year": 2023, "filing_type": "10-K", "source_path": "data/raw/sec/filings/NVDA/2023/629d7d08-3185-46a0-a5a3-1804810c749f.html"}
+{"ticker": "NVDA", "company": null, "fiscal_year": 2023, "filing_type": "10-K", "source_path": "data/raw/sec/filings/NVDA/2023/629d7d08-3185-46a0-a5a3-1804810c749f_files/blank.html"}
+{"ticker": "NVDA", "company": null, "fiscal_year": 2024, "filing_type": "10-K", "source_path": "data/raw/sec/filings/NVDA/2024/d29f44a9-ca5a-484d-9966-5a5b82541132.html"}
+{"ticker": "NVDA", "company": null, "fiscal_year": 2024, "filing_type": "10-K", "source_path": "data/raw/sec/filings/NVDA/2024/d29f44a9-ca5a-484d-9966-5a5b82541132_files/blank.html"}
+{"ticker": "NVDA", "company": null, "fiscal_year": 2025, "filing_type": "10-K", "source_path": "data/raw/sec/filings/NVDA/2025/b2bd9f31-ce6e-4f50-bb51-8d433e958103.html"}
+{"ticker": "NVDA", "company": null, "fiscal_year": 2025, "filing_type": "10-K", "source_path": "data/raw/sec/filings/NVDA/2025/b2bd9f31-ce6e-4f50-bb51-8d433e958103_files/blank.html"}
+{"ticker": "TSLA", "company": null, "fiscal_year": 2021, "filing_type": "10-K", "source_path": "data/raw/sec/filings/TSLA/2021/tsla-10k_20201231.htm"}
+{"ticker": "TSLA", "company": null, "fiscal_year": 2022, "filing_type": "10-K", "source_path": "data/raw/sec/filings/TSLA/2022/10-K.html"}
+{"ticker": "TSLA", "company": null, "fiscal_year": 2023, "filing_type": "10-K", "source_path": "data/raw/sec/filings/TSLA/2023/10-K.html"}
+{"ticker": "TSLA", "company": null, "fiscal_year": 2024, "filing_type": "10-K", "source_path": "data/raw/sec/filings/TSLA/2024/tsla-20231231.html"}
+{"ticker": "TSLA", "company": null, "fiscal_year": 2025, "filing_type": "10-K", "source_path": "data/raw/sec/filings/TSLA/2025/tsla-20241231.html"}
