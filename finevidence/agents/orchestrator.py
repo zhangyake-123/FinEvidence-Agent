@@ -8,6 +8,7 @@ from pathlib import Path
 
 from finevidence.agents.report_agent import ReportAgent
 from finevidence.agents.retriever_agent import RetrieverAgent, summarize_evidence
+from finevidence.agents.table_agent import TableAgent
 from finevidence.indexing.bm25_index import DEFAULT_TEXT_CHUNKS_PATH
 from finevidence.indexing.table_retriever import DEFAULT_TABLE_CHUNKS_PATH
 
@@ -47,6 +48,55 @@ TREND_TERMS = {
     "over time",
 }
 
+FACT_METRIC_TERMS = {
+    "revenue": {
+        "revenue",
+        "revenues",
+        "net sales",
+        "sales",
+    },
+    "gross_profit": {
+        "gross profit",
+        "gross margin dollars",
+    },
+    "operating_income": {
+        "operating income",
+    },
+    "net_income": {
+        "net income",
+        "net earnings",
+    },
+    "operating_cash_flow": {
+        "operating cash flow",
+        "cash flow from operations",
+        "cash provided by operating activities",
+        "net cash provided by operating activities",
+    },
+    "total_assets": {
+        "total assets",
+        "assets",
+    },
+    "total_liabilities": {
+        "total liabilities",
+        "liabilities",
+    },
+    "cash_and_cash_equivalents": {
+        "cash and cash equivalents",
+        "cash equivalents",
+    },
+}
+
+FACT_METRIC_LABELS = {
+    "revenue": "revenue",
+    "gross_profit": "gross profit",
+    "operating_income": "operating income",
+    "net_income": "net income",
+    "operating_cash_flow": "operating cash flow",
+    "total_assets": "total assets",
+    "total_liabilities": "total liabilities",
+    "cash_and_cash_equivalents": "cash and cash equivalents",
+}
+
 
 def classify_question(question: str) -> str:
     """Classify a financial research question into a first-pass workflow route."""
@@ -59,6 +109,27 @@ def classify_question(question: str) -> str:
     if any(term in query for term in RISK_TERMS):
         return "risk_summary"
     return "fact_qa"
+
+
+def infer_fact_metrics(question: str) -> set[str]:
+    """Infer raw financial metrics for fact-style numeric questions."""
+
+    query = question.lower()
+    metrics: set[str] = set()
+    for metric, terms in FACT_METRIC_TERMS.items():
+        if any(term in query for term in terms):
+            metrics.add(metric)
+    return metrics
+
+
+def _format_value(value: object) -> str:
+    if isinstance(value, int):
+        return f"{value:,}"
+    if isinstance(value, float):
+        if value.is_integer():
+            return f"{int(value):,}"
+        return f"{value:,.2f}"
+    return str(value)
 
 
 def _preview_text(text: str, max_chars: int = 360) -> str:
@@ -121,6 +192,88 @@ def _evidence_answer(question: str, question_type: str, evidence: list[dict]) ->
     return "\n".join(lines)
 
 
+def _fact_metric_rank(metric: dict) -> tuple[float, float, float]:
+    label = str(metric.get("source_label", "")).lower()
+    label_bonus = 0.0
+    if metric.get("metric") == "revenue":
+        if label in {"revenue", "total revenue", "net sales", "total net sales"}:
+            label_bonus += 10.0
+        if "deferred revenue" in label or "unearned revenue" in label:
+            label_bonus -= 10.0
+    if label.startswith("total "):
+        label_bonus += 2.0
+    return (
+        label_bonus,
+        float(len(metric.get("source_core_metrics", []))),
+        float(metric.get("source_table_score", 0.0)),
+    )
+
+
+def _select_fact_metrics(metrics: list[dict]) -> list[dict]:
+    best: dict[tuple[str, str, str], dict] = {}
+    for metric in metrics:
+        key = (
+            str(metric.get("ticker", "")),
+            str(metric.get("period", "")),
+            str(metric.get("metric", "")),
+        )
+        if key not in best or _fact_metric_rank(metric) > _fact_metric_rank(best[key]):
+            best[key] = metric
+    return sorted(best.values(), key=lambda item: (item.get("ticker", ""), item.get("period", ""), item.get("metric", "")))
+
+
+def _fact_answer(question: str, fact_metrics: list[dict], table_result: dict) -> str:
+    if not fact_metrics:
+        requested = ", ".join(table_result.get("requested_metrics", [])) or "the requested metric"
+        return (
+            "## Answer\n"
+            f"I could not extract {requested} from the retrieved tables for this question.\n\n"
+            "## Checks\n"
+            "- Status: metric_not_found\n"
+            "- Try increasing --top-k or checking whether the filing contains the requested metric."
+        )
+
+    lines = ["## Answer"]
+    if len(fact_metrics) == 1:
+        metric = fact_metrics[0]
+        ticker = metric.get("ticker") or "The company"
+        period = metric.get("period")
+        label = FACT_METRIC_LABELS.get(str(metric.get("metric")), str(metric.get("metric")))
+        value = _format_value(metric.get("value"))
+        lines.append(f"{ticker}'s {label} in {period} was {value}.")
+    else:
+        lines.extend(
+            [
+                "| Period | Metric | Value |",
+                "| --- | --- | ---: |",
+            ]
+        )
+        for metric in fact_metrics:
+            label = FACT_METRIC_LABELS.get(str(metric.get("metric")), str(metric.get("metric")))
+            lines.append(f"| {metric.get('period')} | {label} | {_format_value(metric.get('value'))} |")
+
+    lines.extend(["", "## Evidence"])
+    seen_tables: set[str] = set()
+    for metric in fact_metrics:
+        table_id = str(metric.get("source_table_id", ""))
+        if table_id and table_id not in seen_tables:
+            seen_tables.add(table_id)
+            lines.append(f"- {table_id}")
+
+    lines.extend(["", "## Checks"])
+    for metric in fact_metrics:
+        label = FACT_METRIC_LABELS.get(str(metric.get("metric")), str(metric.get("metric")))
+        lines.extend(
+            [
+                f"- Metric: {label}",
+                f"- Period: {metric.get('period')}",
+                f"- Source label: {metric.get('source_label')}",
+                f"- Unit: {metric.get('unit', 'as_reported')}",
+            ]
+        )
+    return "\n".join(lines)
+
+
 def _step(name: str, status: str = "completed", **details: object) -> dict:
     record = {"step": name, "status": status}
     if details:
@@ -131,8 +284,9 @@ def _step(name: str, status: str = "completed", **details: object) -> dict:
 class FinEvidenceOrchestrator:
     """Coordinate retrieval, calculation, and report generation for MVP workflows."""
 
-    def __init__(self, retriever_agent: RetrieverAgent, report_agent: ReportAgent) -> None:
+    def __init__(self, retriever_agent: RetrieverAgent, table_agent: TableAgent, report_agent: ReportAgent) -> None:
         self.retriever_agent = retriever_agent
+        self.table_agent = table_agent
         self.report_agent = report_agent
 
     @classmethod
@@ -143,6 +297,7 @@ class FinEvidenceOrchestrator:
     ) -> "FinEvidenceOrchestrator":
         return cls(
             retriever_agent=RetrieverAgent.from_processed(text_path, table_path),
+            table_agent=TableAgent.from_processed(table_path),
             report_agent=ReportAgent.from_processed(table_path),
         )
 
@@ -167,6 +322,36 @@ class FinEvidenceOrchestrator:
         evidence = retrieval_result.get("evidence", [])
         evidence_summary = [summarize_evidence(record) for record in evidence]
         steps.append(_step("retrieve_evidence", evidence_count=len(evidence)))
+
+        fact_metrics = infer_fact_metrics(question)
+        if question_type == "fact_qa" and fact_metrics:
+            table_result = self.table_agent.run(
+                question,
+                ticker=ticker,
+                fiscal_year=fiscal_year,
+                top_k=max(top_k, 8),
+                metrics=fact_metrics,
+            )
+            selected_metrics = _select_fact_metrics(table_result.get("metrics", []))
+            steps.extend(
+                [
+                    _step("extract_fact_metrics", metric_count=len(selected_metrics), requested_metrics=sorted(fact_metrics)),
+                    _step("render_fact_answer", format="markdown"),
+                ]
+            )
+            return {
+                "agent": "FinEvidenceOrchestrator",
+                "question": question,
+                "ticker": ticker,
+                "fiscal_year": fiscal_year,
+                "question_type": question_type,
+                "steps": steps,
+                "answer": _fact_answer(question, selected_metrics, table_result),
+                "evidence": evidence_summary,
+                "facts": selected_metrics,
+                "calculations": [],
+                "warnings": [],
+            }
 
         if question_type in {"metric_calc", "trend_analysis"}:
             report_result = self.report_agent.run(
