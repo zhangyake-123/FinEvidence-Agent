@@ -11,6 +11,7 @@ from finevidence.agents.retriever_agent import RetrieverAgent, summarize_evidenc
 from finevidence.agents.table_agent import TableAgent
 from finevidence.indexing.bm25_index import DEFAULT_TEXT_CHUNKS_PATH
 from finevidence.indexing.table_retriever import DEFAULT_TABLE_CHUNKS_PATH
+from finevidence.verification.numeric_verifier import verify_numeric_outputs
 
 
 METRIC_TERMS = {
@@ -333,9 +334,12 @@ class FinEvidenceOrchestrator:
                 metrics=fact_metrics,
             )
             selected_metrics = _select_fact_metrics(table_result.get("metrics", []))
+            answer = _fact_answer(question, selected_metrics, table_result)
+            verification_report = verify_numeric_outputs(facts=selected_metrics, answer=answer)
             steps.extend(
                 [
                     _step("extract_fact_metrics", metric_count=len(selected_metrics), requested_metrics=sorted(fact_metrics)),
+                    _step("verify_numeric_consistency", status=verification_report["status"]),
                     _step("render_fact_answer", format="markdown"),
                 ]
             )
@@ -346,10 +350,11 @@ class FinEvidenceOrchestrator:
                 "fiscal_year": fiscal_year,
                 "question_type": question_type,
                 "steps": steps,
-                "answer": _fact_answer(question, selected_metrics, table_result),
+                "answer": answer,
                 "evidence": evidence_summary,
                 "facts": selected_metrics,
                 "calculations": [],
+                "verification_report": verification_report,
                 "warnings": [],
             }
 
@@ -361,6 +366,10 @@ class FinEvidenceOrchestrator:
                 top_k=top_k,
             )
             calculator_result = report_result.get("calculator_result", {})
+            verification_report = verify_numeric_outputs(
+                calculations=calculator_result.get("calculations", []),
+                answer=report_result.get("report", ""),
+            )
             steps.extend(
                 [
                     _step(
@@ -368,6 +377,7 @@ class FinEvidenceOrchestrator:
                         calculation_count=len(calculator_result.get("calculations", [])),
                         warning_count=len(calculator_result.get("warnings", [])),
                     ),
+                    _step("verify_numeric_consistency", status=verification_report["status"]),
                     _step("render_report", format="markdown"),
                 ]
             )
@@ -381,6 +391,7 @@ class FinEvidenceOrchestrator:
                 "answer": report_result.get("report", ""),
                 "evidence": evidence_summary,
                 "calculations": calculator_result.get("calculations", []),
+                "verification_report": verification_report,
                 "warnings": calculator_result.get("warnings", []),
             }
 
@@ -396,6 +407,7 @@ class FinEvidenceOrchestrator:
             "answer": answer,
             "evidence": evidence_summary,
             "calculations": [],
+            "verification_report": verify_numeric_outputs(),
             "warnings": [],
         }
 
