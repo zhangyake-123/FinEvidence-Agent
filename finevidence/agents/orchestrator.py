@@ -11,6 +11,8 @@ from finevidence.agents.retriever_agent import RetrieverAgent, summarize_evidenc
 from finevidence.agents.table_agent import TableAgent
 from finevidence.indexing.bm25_index import DEFAULT_TEXT_CHUNKS_PATH
 from finevidence.indexing.table_retriever import DEFAULT_TABLE_CHUNKS_PATH
+from finevidence.verification.claim_extractor import extract_claims
+from finevidence.verification.evidence_verifier import verify_evidence_support
 from finevidence.verification.numeric_verifier import verify_numeric_outputs
 
 
@@ -335,11 +337,19 @@ class FinEvidenceOrchestrator:
             )
             selected_metrics = _select_fact_metrics(table_result.get("metrics", []))
             answer = _fact_answer(question, selected_metrics, table_result)
+            claims = extract_claims(answer=answer, facts=selected_metrics)
             verification_report = verify_numeric_outputs(facts=selected_metrics, answer=answer)
+            evidence_verification_report = verify_evidence_support(
+                claims=claims,
+                facts=selected_metrics,
+                evidence=evidence_summary,
+            )
             steps.extend(
                 [
                     _step("extract_fact_metrics", metric_count=len(selected_metrics), requested_metrics=sorted(fact_metrics)),
+                    _step("extract_claims", claim_count=len(claims)),
                     _step("verify_numeric_consistency", status=verification_report["status"]),
+                    _step("verify_evidence_support", status=evidence_verification_report["status"]),
                     _step("render_fact_answer", format="markdown"),
                 ]
             )
@@ -352,9 +362,11 @@ class FinEvidenceOrchestrator:
                 "steps": steps,
                 "answer": answer,
                 "evidence": evidence_summary,
+                "claims": claims,
                 "facts": selected_metrics,
                 "calculations": [],
                 "verification_report": verification_report,
+                "evidence_verification_report": evidence_verification_report,
                 "warnings": [],
             }
 
@@ -366,9 +378,18 @@ class FinEvidenceOrchestrator:
                 top_k=top_k,
             )
             calculator_result = report_result.get("calculator_result", {})
+            claims = extract_claims(
+                answer=report_result.get("report", ""),
+                calculations=calculator_result.get("calculations", []),
+            )
             verification_report = verify_numeric_outputs(
                 calculations=calculator_result.get("calculations", []),
                 answer=report_result.get("report", ""),
+            )
+            evidence_verification_report = verify_evidence_support(
+                claims=claims,
+                calculations=calculator_result.get("calculations", []),
+                evidence=evidence_summary,
             )
             steps.extend(
                 [
@@ -377,7 +398,9 @@ class FinEvidenceOrchestrator:
                         calculation_count=len(calculator_result.get("calculations", [])),
                         warning_count=len(calculator_result.get("warnings", [])),
                     ),
+                    _step("extract_claims", claim_count=len(claims)),
                     _step("verify_numeric_consistency", status=verification_report["status"]),
+                    _step("verify_evidence_support", status=evidence_verification_report["status"]),
                     _step("render_report", format="markdown"),
                 ]
             )
@@ -390,13 +413,24 @@ class FinEvidenceOrchestrator:
                 "steps": steps,
                 "answer": report_result.get("report", ""),
                 "evidence": evidence_summary,
+                "claims": claims,
                 "calculations": calculator_result.get("calculations", []),
                 "verification_report": verification_report,
+                "evidence_verification_report": evidence_verification_report,
                 "warnings": calculator_result.get("warnings", []),
             }
 
         answer = _evidence_answer(question, question_type, evidence)
-        steps.append(_step("render_evidence_answer", format="markdown"))
+        claims: list[dict] = []
+        verification_report = verify_numeric_outputs()
+        evidence_verification_report = verify_evidence_support(claims=claims, evidence=evidence_summary)
+        steps.extend(
+            [
+                _step("render_evidence_answer", format="markdown"),
+                _step("extract_claims", status="skipped", claim_count=0, reason="retrieval_only_answer_has_no_generated_claims"),
+                _step("verify_evidence_support", status=evidence_verification_report["status"]),
+            ]
+        )
         return {
             "agent": "FinEvidenceOrchestrator",
             "question": question,
@@ -406,8 +440,10 @@ class FinEvidenceOrchestrator:
             "steps": steps,
             "answer": answer,
             "evidence": evidence_summary,
+            "claims": claims,
             "calculations": [],
-            "verification_report": verify_numeric_outputs(),
+            "verification_report": verification_report,
+            "evidence_verification_report": evidence_verification_report,
             "warnings": [],
         }
 
