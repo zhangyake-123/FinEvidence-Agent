@@ -53,6 +53,35 @@ class EvidenceRerankerTest(unittest.TestCase):
         self.assertEqual(results[0]["id"], "income_table")
         self.assertIn("gross_profit", results[0]["rerank_features"]["matched_metrics"])
 
+    def test_prefers_full_income_statement_for_revenue_questions(self) -> None:
+        evidence = [
+            {
+                "evidence_type": "table",
+                "id": "segment_table",
+                "score": 10.0,
+                "core_metrics": ["revenue", "operating_income"],
+                "rows": [["Segment Reporting"], ["Revenue", "116193", "14304", "130497"]],
+            },
+            {
+                "evidence_type": "table",
+                "id": "income_statement",
+                "score": 9.2,
+                "core_metrics": ["revenue", "gross_profit", "operating_income", "net_income"],
+                "rows": [
+                    ["Income Statement [Abstract]"],
+                    ["Revenue", "130497"],
+                    ["Gross profit", "97858"],
+                    ["Operating income", "81453"],
+                    ["Net income", "72880"],
+                ],
+            },
+        ]
+
+        results = EvidenceReranker().rerank("What was revenue in 2025?", evidence, top_k=2)
+
+        self.assertEqual(results[0]["id"], "income_statement")
+        self.assertGreater(results[0]["rerank_features"]["metric_bonus"], 0.5)
+
     def test_infers_query_type_and_metrics(self) -> None:
         self.assertEqual(infer_query_type("What are the supply chain risk factors?"), "text")
         self.assertEqual(infer_query_type("What was revenue in 2025?"), "table")

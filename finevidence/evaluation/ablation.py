@@ -13,9 +13,10 @@ from finevidence.evaluation.metrics import evaluate_prediction, summarize_result
 from finevidence.evaluation.run_eval import DEFAULT_EVAL_DATASET
 from finevidence.indexing.bm25_index import BM25Index, DEFAULT_TEXT_CHUNKS_PATH
 from finevidence.indexing.table_retriever import DEFAULT_TABLE_CHUNKS_PATH
+from finevidence.indexing.vector_index import VectorIndex
 
 
-SUPPORTED_MODES = ("text_only", "hybrid_retrieval", "full_agent")
+SUPPORTED_MODES = ("text_only", "vector_text", "hybrid_retrieval", "hybrid_reranked", "full_agent")
 
 
 def _preview_text(text: str, max_chars: int = 360) -> str:
@@ -166,10 +167,12 @@ class AblationRunner:
     def __init__(
         self,
         text_index: BM25Index,
+        vector_index: VectorIndex,
         retriever_agent: RetrieverAgent,
         orchestrator: FinEvidenceOrchestrator,
     ) -> None:
         self.text_index = text_index
+        self.vector_index = vector_index
         self.retriever_agent = retriever_agent
         self.orchestrator = orchestrator
 
@@ -181,6 +184,7 @@ class AblationRunner:
     ) -> "AblationRunner":
         return cls(
             text_index=BM25Index.from_jsonl(text_chunks_path),
+            vector_index=VectorIndex.from_jsonl(text_chunks_path),
             retriever_agent=RetrieverAgent.from_processed(text_chunks_path, table_chunks_path),
             orchestrator=FinEvidenceOrchestrator.from_processed(text_chunks_path, table_chunks_path),
         )
@@ -188,8 +192,12 @@ class AblationRunner:
     def run_example(self, example: dict, mode: str, top_k: int = 5) -> dict:
         if mode == "text_only":
             return self._run_text_only(example, top_k=top_k)
+        if mode == "vector_text":
+            return self._run_vector_text(example, top_k=top_k)
         if mode == "hybrid_retrieval":
             return self._run_hybrid_retrieval(example, top_k=top_k)
+        if mode == "hybrid_reranked":
+            return self._run_hybrid_reranked(example, top_k=top_k)
         if mode == "full_agent":
             return self.orchestrator.run(
                 example["question"],
@@ -215,6 +223,22 @@ class AblationRunner:
             evidence,
         )
 
+    def _run_vector_text(self, example: dict, top_k: int) -> dict:
+        records = self.vector_index.search(
+            example["question"],
+            ticker=example.get("ticker"),
+            fiscal_year=example.get("fiscal_year"),
+            top_k=example.get("top_k", top_k),
+        )
+        evidence = [_text_evidence_summary(record) for record in records]
+        return _baseline_prediction(
+            "vector_text",
+            example["question"],
+            example.get("ticker"),
+            example.get("fiscal_year"),
+            evidence,
+        )
+
     def _run_hybrid_retrieval(self, example: dict, top_k: int) -> dict:
         result = self.retriever_agent.run(
             example["question"],
@@ -225,6 +249,25 @@ class AblationRunner:
         evidence = [summarize_evidence(record) for record in result.get("evidence", [])]
         return _baseline_prediction(
             "hybrid_retrieval",
+            example["question"],
+            example.get("ticker"),
+            example.get("fiscal_year"),
+            evidence,
+        )
+
+    def _run_hybrid_reranked(self, example: dict, top_k: int) -> dict:
+        requested_top_k = example.get("top_k", top_k)
+        result = self.retriever_agent.run(
+            example["question"],
+            ticker=example.get("ticker"),
+            fiscal_year=example.get("fiscal_year"),
+            top_k=requested_top_k,
+            rerank=True,
+            candidate_k=max(requested_top_k * 3, requested_top_k),
+        )
+        evidence = [summarize_evidence(record) for record in result.get("evidence", [])]
+        return _baseline_prediction(
+            "hybrid_reranked",
             example["question"],
             example.get("ticker"),
             example.get("fiscal_year"),

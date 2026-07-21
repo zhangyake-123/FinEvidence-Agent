@@ -15,6 +15,16 @@ class AblationTest(unittest.TestCase):
         self.assertEqual(result["summary_by_mode"]["text_only"]["count"], 11)
         self.assertEqual(len(result["records_by_mode"]["text_only"]), 11)
 
+    def test_vector_and_reranked_ablation_modes_run(self) -> None:
+        result = run_ablation(
+            dataset_path="data/eval/qa_smoke.jsonl",
+            modes=["vector_text", "hybrid_reranked"],
+            top_k=2,
+        )
+
+        self.assertEqual(result["summary_by_mode"]["vector_text"]["count"], 11)
+        self.assertEqual(result["summary_by_mode"]["hybrid_reranked"]["count"], 11)
+
     def test_compact_result_keeps_evaluation_fields(self) -> None:
         result = run_ablation(
             dataset_path="data/eval/qa_smoke.jsonl",

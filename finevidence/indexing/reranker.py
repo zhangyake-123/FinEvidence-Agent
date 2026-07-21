@@ -193,9 +193,17 @@ def _metric_bonus(query: str, record: dict) -> tuple[float, list[str], list[str]
     core_metrics = {str(metric) for metric in record.get("core_metrics", [])}
     matched = sorted(core_metrics & set(requested))
     bonus = min(0.6, 0.18 * len(matched))
+    statement_metrics = {"revenue", "gross_profit", "operating_income", "net_income"}
 
-    if len(core_metrics & {"revenue", "gross_profit", "operating_income", "net_income"}) >= 3:
-        if "income statement" in query.lower() or "statement of operations" in query.lower():
+    if set(requested) & statement_metrics:
+        statement_metric_count = len(core_metrics & statement_metrics)
+        if statement_metric_count >= 3:
+            bonus += 0.22
+        if statement_metric_count >= 4:
+            bonus += 0.18
+
+        evidence_text = _evidence_text(record).lower()
+        if "income statement" in evidence_text or "statement of operations" in evidence_text:
             bonus += 0.2
 
     return bonus, requested, matched

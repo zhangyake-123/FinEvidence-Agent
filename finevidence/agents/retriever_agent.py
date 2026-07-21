@@ -37,6 +37,12 @@ def summarize_evidence(record: dict) -> dict:
         "fiscal_year": record.get("fiscal_year"),
         "source_path": record.get("source_path"),
     }
+    if "retrieval_score" in record:
+        summary["retrieval_score"] = round(float(record.get("retrieval_score", 0.0)), 4)
+    if "rerank_score" in record:
+        summary["rerank_score"] = round(float(record.get("rerank_score", 0.0)), 4)
+    if "rerank_features" in record:
+        summary["rerank_features"] = record.get("rerank_features", {})
     if record.get("evidence_type") == "text":
         summary["section"] = record.get("section")
         summary["text_preview"] = _preview_text(record.get("content", ""))
@@ -67,6 +73,8 @@ class RetrieverAgent:
         ticker: str | None = None,
         fiscal_year: int | None = None,
         top_k: int = 8,
+        rerank: bool = False,
+        candidate_k: int | None = None,
     ) -> dict:
         """Retrieve evidence candidates for a question."""
 
@@ -75,12 +83,16 @@ class RetrieverAgent:
             ticker=ticker,
             fiscal_year=fiscal_year,
             top_k=top_k,
+            rerank=rerank,
+            candidate_k=candidate_k,
         )
         return {
             "agent": "RetrieverAgent",
             "question": question,
             "ticker": ticker,
             "fiscal_year": fiscal_year,
+            "rerank": rerank,
+            "candidate_k": candidate_k,
             "evidence_count": len(evidence),
             "evidence": evidence,
         }
@@ -94,11 +106,20 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, default=8, help="Number of evidence records.")
     parser.add_argument("--text-chunks", default=DEFAULT_TEXT_CHUNKS_PATH, help="Path to text_chunks.jsonl.")
     parser.add_argument("--tables", default=DEFAULT_TABLE_CHUNKS_PATH, help="Path to table_chunks.jsonl.")
+    parser.add_argument("--rerank", action="store_true", help="Apply rule-based evidence reranking.")
+    parser.add_argument("--candidate-k", type=int, default=None, help="Number of initial candidates before reranking.")
     parser.add_argument("--full", action="store_true", help="Print full evidence records instead of summaries.")
     args = parser.parse_args()
 
     agent = RetrieverAgent.from_processed(args.text_chunks, args.tables)
-    result = agent.run(args.question, ticker=args.ticker, fiscal_year=args.year, top_k=args.top_k)
+    result = agent.run(
+        args.question,
+        ticker=args.ticker,
+        fiscal_year=args.year,
+        top_k=args.top_k,
+        rerank=args.rerank,
+        candidate_k=args.candidate_k,
+    )
     if not args.full:
         result = {
             **{key: value for key, value in result.items() if key != "evidence"},
