@@ -6,86 +6,13 @@ import argparse
 import json
 from pathlib import Path
 
+from finevidence.agents.planner import PlannerAgent, classify_question, infer_fact_metrics
 from finevidence.agents.report_agent import ReportAgent
 from finevidence.agents.retriever_agent import RetrieverAgent, summarize_evidence
 from finevidence.agents.table_agent import TableAgent
 from finevidence.agents.verifier_agent import VerifierAgent
 from finevidence.indexing.bm25_index import DEFAULT_TEXT_CHUNKS_PATH
 from finevidence.indexing.table_retriever import DEFAULT_TABLE_CHUNKS_PATH
-
-
-METRIC_TERMS = {
-    "gross margin",
-    "operating margin",
-    "net margin",
-    "revenue growth",
-    "sales growth",
-    "year over year",
-    "yoy",
-    "free cash flow",
-    "debt to assets",
-    "liabilities to assets",
-}
-
-RISK_TERMS = {
-    "risk",
-    "risks",
-    "risk factor",
-    "risk factors",
-    "supply chain",
-    "competition",
-    "competitive",
-    "regulation",
-    "regulatory",
-    "legal",
-}
-
-TREND_TERMS = {
-    "trend",
-    "change",
-    "changes",
-    "past three years",
-    "last three years",
-    "over time",
-}
-
-FACT_METRIC_TERMS = {
-    "revenue": {
-        "revenue",
-        "revenues",
-        "net sales",
-        "sales",
-    },
-    "gross_profit": {
-        "gross profit",
-        "gross margin dollars",
-    },
-    "operating_income": {
-        "operating income",
-    },
-    "net_income": {
-        "net income",
-        "net earnings",
-    },
-    "operating_cash_flow": {
-        "operating cash flow",
-        "cash flow from operations",
-        "cash provided by operating activities",
-        "net cash provided by operating activities",
-    },
-    "total_assets": {
-        "total assets",
-        "assets",
-    },
-    "total_liabilities": {
-        "total liabilities",
-        "liabilities",
-    },
-    "cash_and_cash_equivalents": {
-        "cash and cash equivalents",
-        "cash equivalents",
-    },
-}
 
 FACT_METRIC_LABELS = {
     "revenue": "revenue",
@@ -97,30 +24,6 @@ FACT_METRIC_LABELS = {
     "total_liabilities": "total liabilities",
     "cash_and_cash_equivalents": "cash and cash equivalents",
 }
-
-
-def classify_question(question: str) -> str:
-    """Classify a financial research question into a first-pass workflow route."""
-
-    query = question.lower()
-    if any(term in query for term in METRIC_TERMS):
-        if any(term in query for term in TREND_TERMS):
-            return "trend_analysis"
-        return "metric_calc"
-    if any(term in query for term in RISK_TERMS):
-        return "risk_summary"
-    return "fact_qa"
-
-
-def infer_fact_metrics(question: str) -> set[str]:
-    """Infer raw financial metrics for fact-style numeric questions."""
-
-    query = question.lower()
-    metrics: set[str] = set()
-    for metric, terms in FACT_METRIC_TERMS.items():
-        if any(term in query for term in terms):
-            metrics.add(metric)
-    return metrics
 
 
 def _format_value(value: object) -> str:
@@ -290,11 +193,13 @@ class FinEvidenceOrchestrator:
         retriever_agent: RetrieverAgent,
         table_agent: TableAgent,
         report_agent: ReportAgent,
+        planner_agent: PlannerAgent | None = None,
         verifier_agent: VerifierAgent | None = None,
     ) -> None:
         self.retriever_agent = retriever_agent
         self.table_agent = table_agent
         self.report_agent = report_agent
+        self.planner_agent = planner_agent or PlannerAgent()
         self.verifier_agent = verifier_agent or VerifierAgent()
 
     @classmethod
@@ -307,6 +212,7 @@ class FinEvidenceOrchestrator:
             retriever_agent=RetrieverAgent.from_processed(text_path, table_path),
             table_agent=TableAgent.from_processed(table_path),
             report_agent=ReportAgent.from_processed(table_path),
+            planner_agent=PlannerAgent(),
             verifier_agent=VerifierAgent(),
         )
 
@@ -319,8 +225,22 @@ class FinEvidenceOrchestrator:
     ) -> dict:
         """Run the first end-to-end FinEvidence workflow."""
 
-        question_type = classify_question(question)
-        steps = [_step("classify_question", question_type=question_type)]
+        plan = self.planner_agent.run(
+            question,
+            ticker=ticker,
+            fiscal_year=fiscal_year,
+            top_k=top_k,
+        )
+        question_type = plan["question_type"]
+        steps = [
+            _step(
+                "plan_question",
+                question_type=question_type,
+                requested_metrics=plan.get("requested_metrics", []),
+                requested_calculations=plan.get("requested_calculations", []),
+                planned_steps=plan.get("steps", []),
+            )
+        ]
 
         retrieval_result = self.retriever_agent.run(
             question,
@@ -332,7 +252,7 @@ class FinEvidenceOrchestrator:
         evidence_summary = [summarize_evidence(record) for record in evidence]
         steps.append(_step("retrieve_evidence", evidence_count=len(evidence)))
 
-        fact_metrics = infer_fact_metrics(question)
+        fact_metrics = set(plan.get("requested_metrics", []))
         if question_type == "fact_qa" and fact_metrics:
             table_result = self.table_agent.run(
                 question,
@@ -370,6 +290,7 @@ class FinEvidenceOrchestrator:
                 "ticker": ticker,
                 "fiscal_year": fiscal_year,
                 "question_type": question_type,
+                "plan": plan,
                 "steps": steps,
                 "answer": answer,
                 "evidence": evidence_summary,
@@ -422,6 +343,7 @@ class FinEvidenceOrchestrator:
                 "ticker": ticker,
                 "fiscal_year": fiscal_year,
                 "question_type": question_type,
+                "plan": plan,
                 "steps": steps,
                 "answer": report_result.get("report", ""),
                 "evidence": evidence_summary,
@@ -460,6 +382,7 @@ class FinEvidenceOrchestrator:
             "ticker": ticker,
             "fiscal_year": fiscal_year,
             "question_type": question_type,
+            "plan": plan,
             "steps": steps,
             "answer": answer,
             "evidence": evidence_summary,
