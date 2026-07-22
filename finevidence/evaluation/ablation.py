@@ -381,6 +381,14 @@ def compact_result(result: dict) -> dict:
     }
 
 
+def summary_result(result: dict) -> dict:
+    return {
+        "dataset": result["dataset"],
+        "modes": result["modes"],
+        "summary_by_mode": result["summary_by_mode"],
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run FinEvidence baseline and ablation comparisons.")
     parser.add_argument("--dataset", default=DEFAULT_EVAL_DATASET, help="Path to eval JSONL.")
@@ -395,6 +403,7 @@ def main() -> None:
     parser.add_argument("--tables", default=DEFAULT_TABLE_CHUNKS_PATH, help="Path to table_chunks.jsonl.")
     parser.add_argument("--top-k", type=int, default=5, help="Default top-k retrieval setting.")
     parser.add_argument("--output", default=None, help="Optional path to save full ablation JSON.")
+    parser.add_argument("--records", action="store_true", help="Print compact per-example records.")
     parser.add_argument("--full", action="store_true", help="Print full records instead of compact records.")
     args = parser.parse_args()
 
@@ -410,7 +419,12 @@ def main() -> None:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    printable = result if args.full else compact_result(result)
+    if args.full:
+        printable = result
+    elif args.records:
+        printable = compact_result(result)
+    else:
+        printable = summary_result(result)
     print(json.dumps(printable, ensure_ascii=False, indent=2))
 
 
