@@ -61,6 +61,27 @@ def _empty_evidence_report() -> dict:
     }
 
 
+def _empty_citation_report() -> dict:
+    return {
+        "verifier": "not_applicable",
+        "status": "not_applicable",
+        "require_citations": False,
+        "citation_count": 0,
+        "cited_evidence_count": 0,
+        "alias_citations": [],
+        "direct_evidence_ids": [],
+        "citation_map": {},
+        "cited_evidence_ids": [],
+        "available_evidence_ids": [],
+        "required_evidence_ids": [],
+        "unknown_aliases": [],
+        "unknown_evidence_ids": [],
+        "missing_required_evidence_ids": [],
+        "issue_count": 0,
+        "issues": [],
+    }
+
+
 def _empty_verifier_report() -> dict:
     return {
         "agent": "not_applicable",
@@ -69,6 +90,7 @@ def _empty_verifier_report() -> dict:
         "claims": [],
         "numeric_report": _empty_numeric_report(),
         "evidence_report": _empty_evidence_report(),
+        "citation_report": _empty_citation_report(),
         "warnings": [],
     }
 
@@ -126,6 +148,7 @@ def _baseline_prediction(mode: str, question: str, ticker: str | None, fiscal_ye
     numeric_report = _empty_numeric_report()
     evidence_report = _empty_evidence_report()
     verifier_report = _empty_verifier_report()
+    citation_report = _empty_citation_report()
     return {
         "agent": f"AblationBaseline:{mode}",
         "mode": mode,
@@ -139,6 +162,7 @@ def _baseline_prediction(mode: str, question: str, ticker: str | None, fiscal_ye
         "calculations": [],
         "verification_report": numeric_report,
         "evidence_verification_report": evidence_report,
+        "citation_report": citation_report,
         "verifier_report": verifier_report,
         "steps": [
             {
@@ -286,6 +310,7 @@ def _error_prediction(example: dict, mode: str, error: Exception) -> dict:
     evidence_report = _empty_evidence_report()
     verifier_report = _empty_verifier_report()
     verifier_report["status"] = "failed"
+    citation_report = _empty_citation_report()
     return {
         "agent": f"AblationBaseline:{mode}",
         "mode": mode,
@@ -299,6 +324,7 @@ def _error_prediction(example: dict, mode: str, error: Exception) -> dict:
         "calculations": [],
         "verification_report": numeric_report,
         "evidence_verification_report": evidence_report,
+        "citation_report": citation_report,
         "verifier_report": verifier_report,
         "steps": [{"step": "run_mode", "status": "failed", "details": {"mode": mode}}],
         "warnings": [str(error)],
@@ -362,9 +388,11 @@ def _compact_records(records: list[dict]) -> list[dict]:
                 "evidence_recall": evaluation.get("evidence_recall"),
                 "numeric_consistency": evaluation.get("numeric_consistency"),
                 "hallucination_free": evaluation.get("hallucination_free"),
+                "citation_accuracy": evaluation.get("citation_accuracy"),
                 "tool_success": evaluation.get("tool_success"),
                 "numeric_status": evaluation.get("numeric_status"),
                 "evidence_status": evaluation.get("evidence_status"),
+                "citation_status": evaluation.get("citation_status"),
                 "error": evaluation.get("error"),
             }
         )

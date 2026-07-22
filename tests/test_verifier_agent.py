@@ -47,6 +47,7 @@ class VerifierAgentTest(unittest.TestCase):
         self.assertEqual(report["claim_count"], 1)
         self.assertEqual(report["numeric_report"]["status"], "passed")
         self.assertEqual(report["evidence_report"]["status"], "supported")
+        self.assertEqual(report["citation_report"]["status"], "not_applicable")
 
     def test_numeric_error_fails_overall_verification(self) -> None:
         report = VerifierAgent().run(
@@ -104,6 +105,30 @@ class VerifierAgentTest(unittest.TestCase):
 
         self.assertEqual(report["claims"][0]["claim_id"], "manual_0001")
         self.assertEqual(report["status"], "passed")
+
+    def test_required_citation_can_fail_overall_verification(self) -> None:
+        report = VerifierAgent().run(
+            answer="AAPL's gross margin was 46.91% in 2025.",
+            calculations=[gross_margin_record()],
+            require_citations=True,
+        )
+
+        self.assertEqual(report["status"], "failed")
+        self.assertEqual(report["citation_report"]["status"], "missing_citation")
+
+    def test_required_citation_passes_when_source_is_cited(self) -> None:
+        report = VerifierAgent().run(
+            answer=(
+                "AAPL's gross margin was 46.91% in 2025 [T1].\n\n"
+                "## Evidence\n"
+                "- [T1] AAPL_2025_10K_table_0014"
+            ),
+            calculations=[gross_margin_record()],
+            require_citations=True,
+        )
+
+        self.assertEqual(report["status"], "passed")
+        self.assertEqual(report["citation_report"]["status"], "passed")
 
 
 if __name__ == "__main__":

@@ -267,10 +267,12 @@ class FinEvidenceOrchestrator:
                 answer=answer,
                 facts=selected_metrics,
                 evidence=evidence_summary,
+                require_citations=True,
             )
             claims = verifier_report["claims"]
             verification_report = verifier_report["numeric_report"]
             evidence_verification_report = verifier_report["evidence_report"]
+            citation_report = verifier_report["citation_report"]
             steps.extend(
                 [
                     _step("extract_fact_metrics", metric_count=len(selected_metrics), requested_metrics=sorted(fact_metrics)),
@@ -280,6 +282,7 @@ class FinEvidenceOrchestrator:
                         claim_count=len(claims),
                         numeric_status=verification_report["status"],
                         evidence_status=evidence_verification_report["status"],
+                        citation_status=citation_report["status"],
                     ),
                     _step("render_fact_answer", format="markdown"),
                 ]
@@ -299,6 +302,7 @@ class FinEvidenceOrchestrator:
                 "calculations": [],
                 "verification_report": verification_report,
                 "evidence_verification_report": evidence_verification_report,
+                "citation_report": citation_report,
                 "verifier_report": verifier_report,
                 "warnings": verifier_report["warnings"],
             }
@@ -315,10 +319,12 @@ class FinEvidenceOrchestrator:
                 answer=report_result.get("report", ""),
                 calculations=calculator_result.get("calculations", []),
                 evidence=evidence_summary,
+                require_citations=True,
             )
             claims = verifier_report["claims"]
             verification_report = verifier_report["numeric_report"]
             evidence_verification_report = verifier_report["evidence_report"]
+            citation_report = verifier_report["citation_report"]
             warnings = calculator_result.get("warnings", []) + verifier_report["warnings"]
             steps.extend(
                 [
@@ -333,6 +339,7 @@ class FinEvidenceOrchestrator:
                         claim_count=len(claims),
                         numeric_status=verification_report["status"],
                         evidence_status=evidence_verification_report["status"],
+                        citation_status=citation_report["status"],
                     ),
                     _step("render_report", format="markdown"),
                 ]
@@ -351,6 +358,7 @@ class FinEvidenceOrchestrator:
                 "calculations": calculator_result.get("calculations", []),
                 "verification_report": verification_report,
                 "evidence_verification_report": evidence_verification_report,
+                "citation_report": citation_report,
                 "verifier_report": verifier_report,
                 "warnings": warnings,
             }
@@ -360,10 +368,12 @@ class FinEvidenceOrchestrator:
             answer=answer,
             evidence=evidence_summary,
             extract_answer_claims=False,
+            require_citations=True,
         )
         claims = verifier_report["claims"]
         verification_report = verifier_report["numeric_report"]
         evidence_verification_report = verifier_report["evidence_report"]
+        citation_report = verifier_report["citation_report"]
         steps.extend(
             [
                 _step("render_evidence_answer", format="markdown"),
@@ -373,6 +383,7 @@ class FinEvidenceOrchestrator:
                     claim_count=len(claims),
                     numeric_status=verification_report["status"],
                     evidence_status=evidence_verification_report["status"],
+                    citation_status=citation_report["status"],
                 ),
             ]
         )
@@ -390,6 +401,7 @@ class FinEvidenceOrchestrator:
             "calculations": [],
             "verification_report": verification_report,
             "evidence_verification_report": evidence_verification_report,
+            "citation_report": citation_report,
             "verifier_report": verifier_report,
             "warnings": verifier_report["warnings"],
         }

@@ -87,9 +87,11 @@ def _compact_records(records: list[dict]) -> list[dict]:
                 "evidence_recall": evaluation.get("evidence_recall"),
                 "numeric_consistency": evaluation.get("numeric_consistency"),
                 "hallucination_free": evaluation.get("hallucination_free"),
+                "citation_accuracy": evaluation.get("citation_accuracy"),
                 "tool_success": evaluation.get("tool_success"),
                 "numeric_status": evaluation.get("numeric_status"),
                 "evidence_status": evaluation.get("evidence_status"),
+                "citation_status": evaluation.get("citation_status"),
                 "error": evaluation.get("error"),
             }
         )

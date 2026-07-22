@@ -114,6 +114,12 @@ def _evidence_status(prediction: dict) -> str:
     return str(evidence_report.get("status", "not_applicable"))
 
 
+def _citation_status(prediction: dict) -> str:
+    verifier_report = prediction.get("verifier_report", {})
+    citation_report = verifier_report.get("citation_report") or prediction.get("citation_report", {})
+    return str(citation_report.get("status", "not_applicable"))
+
+
 def _tool_success(prediction: dict) -> float:
     if prediction.get("error"):
         return 0.0
@@ -164,12 +170,16 @@ def evaluate_prediction(example: dict, prediction: dict) -> dict:
 
     numeric_status = _numeric_status(prediction)
     evidence_status = _evidence_status(prediction)
+    citation_status = _citation_status(prediction)
     if gold_numbers:
         numeric_consistency = 1.0 if numeric_match == 1.0 and numeric_status == "passed" else 0.0
     else:
         numeric_consistency = 0.0 if numeric_status == "numeric_error" else 1.0
 
     hallucination_free = 1.0 if evidence_status in {"supported", "not_applicable"} else 0.0
+    citation_accuracy = None
+    if citation_status != "not_applicable":
+        citation_accuracy = 1.0 if citation_status == "passed" else 0.0
     tool_success = _tool_success(prediction)
 
     record = {
@@ -184,9 +194,11 @@ def evaluate_prediction(example: dict, prediction: dict) -> dict:
         "gold_number_count": len(gold_numbers),
         "numeric_consistency": numeric_consistency,
         "hallucination_free": hallucination_free,
+        "citation_accuracy": citation_accuracy,
         "tool_success": tool_success,
         "numeric_status": numeric_status,
         "evidence_status": evidence_status,
+        "citation_status": citation_status,
         "verifier_status": prediction.get("verifier_report", {}).get("status"),
         "answer": prediction.get("answer", ""),
         "error": prediction.get("error"),
@@ -204,20 +216,27 @@ def summarize_results(records: list[dict]) -> dict:
             "answer_accuracy": None,
             "evidence_recall": None,
             "numeric_consistency": None,
+            "citation_accuracy": None,
             "hallucination_rate": None,
             "tool_success_rate": None,
+            "numeric_pass_rate": None,
+            "evidence_support_rate": None,
+            "citation_pass_rate": None,
         }
 
     answer_scores = [record["answer_accuracy"] for record in records if record.get("answer_accuracy") is not None]
     evidence_scores = [record["evidence_recall"] for record in records if record.get("evidence_recall") is not None]
+    citation_scores = [record["citation_accuracy"] for record in records if record.get("citation_accuracy") is not None]
 
     return {
         "count": len(records),
         "answer_accuracy": _score(answer_scores),
         "evidence_recall": _score(evidence_scores),
         "numeric_consistency": _score([record["numeric_consistency"] for record in records]),
+        "citation_accuracy": _score(citation_scores),
         "hallucination_rate": round(1.0 - mean(record["hallucination_free"] for record in records), 4),
         "tool_success_rate": _score([record["tool_success"] for record in records]),
         "numeric_pass_rate": _score([1.0 if record["numeric_status"] in {"passed", "not_applicable"} else 0.0 for record in records]),
         "evidence_support_rate": _score([1.0 if record["evidence_status"] in {"supported", "not_applicable"} else 0.0 for record in records]),
+        "citation_pass_rate": _score([1.0 if record["citation_status"] in {"passed", "not_applicable"} else 0.0 for record in records]),
     }

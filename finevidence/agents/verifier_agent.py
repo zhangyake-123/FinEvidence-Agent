@@ -6,6 +6,7 @@ import argparse
 import json
 
 from finevidence.verification.claim_extractor import extract_claims
+from finevidence.verification.citation_checker import check_citations
 from finevidence.verification.evidence_verifier import verify_evidence_support
 from finevidence.verification.numeric_verifier import verify_numeric_outputs
 
@@ -14,6 +15,7 @@ FAILED_NUMERIC_STATUSES = {"numeric_error"}
 WARNING_NUMERIC_STATUSES = {"insufficient_data"}
 FAILED_EVIDENCE_STATUSES = {"unsupported"}
 WARNING_EVIDENCE_STATUSES = {"partially_supported", "ambiguous"}
+FAILED_CITATION_STATUSES = {"missing_citation", "unknown_citation"}
 
 
 class VerifierAgent:
@@ -27,6 +29,7 @@ class VerifierAgent:
         evidence: list[dict] | None = None,
         claims: list[dict] | None = None,
         extract_answer_claims: bool = True,
+        require_citations: bool = False,
     ) -> dict:
         """Verify an answer against structured calculations, facts, and evidence.
 
@@ -38,6 +41,7 @@ class VerifierAgent:
             claims: Optional pre-extracted claims. If omitted, the agent extracts them.
             extract_answer_claims: Whether to fall back to answer-text claim extraction when
                 no structured calculations or facts are present.
+            require_citations: Whether structured facts and calculations must be cited.
 
         Returns:
             A unified verification report with extracted claims and sub-reports.
@@ -64,8 +68,16 @@ class VerifierAgent:
             facts=facts,
             evidence=evidence,
         )
-        status = self._overall_status(numeric_report, evidence_report)
-        warnings = self._warnings(status, numeric_report, evidence_report)
+        citation_report = check_citations(
+            answer=answer,
+            evidence=evidence,
+            calculations=calculations,
+            facts=facts,
+            claims=claims,
+            require_citations=require_citations,
+        )
+        status = self._overall_status(numeric_report, evidence_report, citation_report)
+        warnings = self._warnings(status, numeric_report, evidence_report, citation_report)
 
         return {
             "agent": "VerifierAgent",
@@ -74,6 +86,7 @@ class VerifierAgent:
             "claims": claims,
             "numeric_report": numeric_report,
             "evidence_report": evidence_report,
+            "citation_report": citation_report,
             "warnings": warnings,
         }
 
@@ -95,22 +108,32 @@ class VerifierAgent:
             )
         return []
 
-    def _overall_status(self, numeric_report: dict, evidence_report: dict) -> str:
+    def _overall_status(self, numeric_report: dict, evidence_report: dict, citation_report: dict) -> str:
         numeric_status = numeric_report.get("status")
         evidence_status = evidence_report.get("status")
+        citation_status = citation_report.get("status")
 
-        if numeric_status in FAILED_NUMERIC_STATUSES or evidence_status in FAILED_EVIDENCE_STATUSES:
+        if (
+            numeric_status in FAILED_NUMERIC_STATUSES
+            or evidence_status in FAILED_EVIDENCE_STATUSES
+            or citation_status in FAILED_CITATION_STATUSES
+        ):
             return "failed"
         if numeric_status in WARNING_NUMERIC_STATUSES or evidence_status in WARNING_EVIDENCE_STATUSES:
             return "warning"
-        if numeric_status == "not_applicable" and evidence_status == "not_applicable":
+        if (
+            numeric_status == "not_applicable"
+            and evidence_status == "not_applicable"
+            and citation_status == "not_applicable"
+        ):
             return "not_applicable"
         return "passed"
 
-    def _warnings(self, status: str, numeric_report: dict, evidence_report: dict) -> list[str]:
+    def _warnings(self, status: str, numeric_report: dict, evidence_report: dict, citation_report: dict) -> list[str]:
         warnings: list[str] = []
         numeric_status = numeric_report.get("status")
         evidence_status = evidence_report.get("status")
+        citation_status = citation_report.get("status")
 
         if numeric_status == "numeric_error":
             warnings.append("Numeric verifier found inconsistent values.")
@@ -123,6 +146,11 @@ class VerifierAgent:
             warnings.append("Evidence verifier found only partial claim support.")
         elif evidence_status == "ambiguous":
             warnings.append("Evidence verifier could not strictly link claims to evidence.")
+
+        if citation_status == "missing_citation":
+            warnings.append("Citation checker found required source evidence that was not cited.")
+        elif citation_status == "unknown_citation":
+            warnings.append("Citation checker found citations that do not map to available evidence.")
 
         if status == "not_applicable" and not warnings:
             return []
@@ -139,6 +167,7 @@ def verify_payload(payload: dict) -> dict:
         evidence=payload.get("evidence", []),
         claims=payload.get("claims"),
         extract_answer_claims=payload.get("extract_answer_claims", True),
+        require_citations=payload.get("require_citations", False),
     )
 
 
