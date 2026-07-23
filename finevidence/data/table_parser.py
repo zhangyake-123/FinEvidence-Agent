@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import json
 import re
 from decimal import Decimal, InvalidOperation
 from io import StringIO
 from pathlib import Path
 from typing import Iterable
 
-from finevidence.data.filing_parser import RAW_FILINGS_ROOT, PROCESSED_ROOT, infer_ticker_and_year, iter_filing_paths
+from finevidence.data.sec_filing_parser import RAW_FILINGS_ROOT, PROCESSED_ROOT, infer_ticker_and_year, iter_filing_paths
+from finevidence.data.text_utils import write_jsonl
 
 
 METRIC_ALIASES = {
@@ -227,16 +227,6 @@ def extract_metric_records(table_records: Iterable[dict]) -> list[dict]:
                 )
 
     return metric_records
-
-
-def write_jsonl(records: Iterable[dict], path: str | Path) -> None:
-    """Write records as UTF-8 JSON Lines."""
-
-    output_path = Path(path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("w", encoding="utf-8") as file:
-        for record in records:
-            file.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def parse_tables(

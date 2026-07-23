@@ -6,8 +6,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from finevidence.data.filing_parser import clean_text
 from finevidence.data.schema import ParsedDocument, ParsedPage
+from finevidence.data.text_utils import clean_text
 
 
 DEFAULT_TEXT_FIELDS = (

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import re
 
-from finevidence.data.filing_parser import chunk_text, clean_text
 from finevidence.data.schema import ParsedDocument, ParsedPage
+from finevidence.data.text_utils import chunk_text, clean_text
 
 
 def _slug(text: object) -> str:

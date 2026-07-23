@@ -67,7 +67,7 @@ kept local and should not be committed.
 Parse downloaded filings into text chunks:
 
 ```bash
-python3 -B -m finevidence.data.filing_parser
+python3 -B -m finevidence.data.sec_filing_parser
 ```
 
 Parse filing tables and metric records:

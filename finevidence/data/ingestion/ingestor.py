@@ -6,7 +6,6 @@ import argparse
 import json
 from pathlib import Path
 
-from finevidence.data.filing_parser import write_jsonl
 from finevidence.data.ingestion.chunker import chunk_document
 from finevidence.data.ingestion.detector import detect_file_type, is_supported_file
 from finevidence.data.ingestion.parsers.base import DocumentParser
@@ -15,6 +14,7 @@ from finevidence.data.ingestion.parsers.json_parser import JSONDocumentParser
 from finevidence.data.ingestion.parsers.jsonl_parser import JSONLDocumentParser
 from finevidence.data.ingestion.parsers.pdf_parser import PDFDocumentParser
 from finevidence.data.ingestion.parsers.text_parser import TextDocumentParser
+from finevidence.data.text_utils import write_jsonl
 
 
 DEFAULT_INGESTION_OUTPUT = Path("data/processed/text_chunks.jsonl")

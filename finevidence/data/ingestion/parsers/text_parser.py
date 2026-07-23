@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from finevidence.data.filing_parser import clean_text
 from finevidence.data.schema import ParsedDocument, ParsedPage
+from finevidence.data.text_utils import clean_text
 
 
 class TextDocumentParser:
