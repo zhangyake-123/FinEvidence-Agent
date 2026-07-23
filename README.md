@@ -76,6 +76,23 @@ Parse filing tables and metric records:
 python3 -B -m finevidence.data.table_parser
 ```
 
+Ingest generic text-like files into text chunks:
+
+```bash
+python3 -B -m finevidence.data.ingestion.ingestor \
+  --input data/raw/sec/filings \
+  --output data/processed/text_chunks.jsonl \
+  --source-dataset sec
+```
+
+Supported ingestion formats in the generic path:
+
+- HTML
+- PDF, when `pypdf` is installed
+- JSON
+- JSONL
+- TXT/Markdown
+
 Run BM25 retrieval:
 
 ```bash
