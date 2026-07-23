@@ -6,11 +6,13 @@ import argparse
 import json
 from pathlib import Path
 
+from finevidence.agents.llm_report_agent import LLMReportAgent, build_llm_payload
 from finevidence.agents.planner import PlannerAgent, classify_question, infer_fact_metrics
 from finevidence.agents.report_agent import ReportAgent
 from finevidence.agents.retriever_agent import RetrieverAgent, summarize_evidence
 from finevidence.agents.table_agent import TableAgent
 from finevidence.agents.verifier_agent import VerifierAgent
+from finevidence.config import DEFAULT_REPORT_MODE
 from finevidence.indexing.bm25_index import DEFAULT_TEXT_CHUNKS_PATH
 from finevidence.indexing.table_retriever import DEFAULT_TABLE_CHUNKS_PATH
 
@@ -24,6 +26,8 @@ FACT_METRIC_LABELS = {
     "total_liabilities": "total liabilities",
     "cash_and_cash_equivalents": "cash and cash equivalents",
 }
+
+REPORT_MODES = {"rule", "llm"}
 
 
 def _format_value(value: object) -> str:
@@ -185,6 +189,12 @@ def _step(name: str, status: str = "completed", **details: object) -> dict:
     return record
 
 
+def _validate_report_mode(report_mode: str) -> str:
+    if report_mode not in REPORT_MODES:
+        raise ValueError(f"Unsupported report_mode: {report_mode}")
+    return report_mode
+
+
 class FinEvidenceOrchestrator:
     """Coordinate retrieval, calculation, and report generation for MVP workflows."""
 
@@ -195,18 +205,26 @@ class FinEvidenceOrchestrator:
         report_agent: ReportAgent,
         planner_agent: PlannerAgent | None = None,
         verifier_agent: VerifierAgent | None = None,
+        llm_report_agent: LLMReportAgent | None = None,
+        report_mode: str = DEFAULT_REPORT_MODE,
     ) -> None:
         self.retriever_agent = retriever_agent
         self.table_agent = table_agent
         self.report_agent = report_agent
         self.planner_agent = planner_agent or PlannerAgent()
         self.verifier_agent = verifier_agent or VerifierAgent()
+        self.llm_report_agent = llm_report_agent
+        self.report_mode = _validate_report_mode(report_mode)
 
     @classmethod
     def from_processed(
         cls,
         text_path: str | Path = DEFAULT_TEXT_CHUNKS_PATH,
         table_path: str | Path = DEFAULT_TABLE_CHUNKS_PATH,
+        report_mode: str = DEFAULT_REPORT_MODE,
+        llm_model: str | None = None,
+        llm_provider: str | None = None,
+        llm_base_url: str | None = None,
     ) -> "FinEvidenceOrchestrator":
         return cls(
             retriever_agent=RetrieverAgent.from_processed(text_path, table_path),
@@ -214,7 +232,40 @@ class FinEvidenceOrchestrator:
             report_agent=ReportAgent.from_processed(table_path),
             planner_agent=PlannerAgent(),
             verifier_agent=VerifierAgent(),
+            llm_report_agent=LLMReportAgent(
+                model=llm_model,
+                provider=llm_provider,
+                base_url=llm_base_url,
+            ),
+            report_mode=report_mode,
         )
+
+    def _llm_answer(
+        self,
+        question: str,
+        question_type: str,
+        ticker: str | None,
+        fiscal_year: int | None,
+        evidence: list[dict],
+        calculations: list[dict] | None = None,
+        facts: list[dict] | None = None,
+        warnings: list[dict] | list[str] | None = None,
+        fallback_report: str | None = None,
+    ) -> dict:
+        if self.llm_report_agent is None:
+            raise ValueError("report_mode='llm' requires an LLMReportAgent.")
+        payload = build_llm_payload(
+            question=question,
+            question_type=question_type,
+            ticker=ticker,
+            fiscal_year=fiscal_year,
+            evidence=evidence,
+            calculations=calculations,
+            facts=facts,
+            warnings=warnings,
+            fallback_report=fallback_report,
+        )
+        return self.llm_report_agent.render_payload(payload)
 
     def run(
         self,
@@ -222,9 +273,11 @@ class FinEvidenceOrchestrator:
         ticker: str | None = None,
         fiscal_year: int | None = None,
         top_k: int = 8,
+        report_mode: str | None = None,
     ) -> dict:
         """Run the first end-to-end FinEvidence workflow."""
 
+        active_report_mode = _validate_report_mode(report_mode or self.report_mode)
         plan = self.planner_agent.run(
             question,
             ticker=ticker,
@@ -239,6 +292,7 @@ class FinEvidenceOrchestrator:
                 requested_metrics=plan.get("requested_metrics", []),
                 requested_calculations=plan.get("requested_calculations", []),
                 planned_steps=plan.get("steps", []),
+                report_mode=active_report_mode,
             )
         ]
 
@@ -262,7 +316,21 @@ class FinEvidenceOrchestrator:
                 metrics=fact_metrics,
             )
             selected_metrics = _select_fact_metrics(table_result.get("metrics", []))
-            answer = _fact_answer(question, selected_metrics, table_result)
+            rule_answer = _fact_answer(question, selected_metrics, table_result)
+            llm_report_result = None
+            if active_report_mode == "llm":
+                llm_report_result = self._llm_answer(
+                    question=question,
+                    question_type=question_type,
+                    ticker=ticker,
+                    fiscal_year=fiscal_year,
+                    evidence=evidence_summary,
+                    facts=selected_metrics,
+                    fallback_report=rule_answer,
+                )
+                answer = llm_report_result["report"]
+            else:
+                answer = rule_answer
             verifier_report = self.verifier_agent.run(
                 answer=answer,
                 facts=selected_metrics,
@@ -276,6 +344,7 @@ class FinEvidenceOrchestrator:
             steps.extend(
                 [
                     _step("extract_fact_metrics", metric_count=len(selected_metrics), requested_metrics=sorted(fact_metrics)),
+                    _step("render_llm_report" if active_report_mode == "llm" else "render_fact_answer", format="markdown"),
                     _step(
                         "run_verifier_agent",
                         status=verifier_report["status"],
@@ -284,7 +353,6 @@ class FinEvidenceOrchestrator:
                         evidence_status=evidence_verification_report["status"],
                         citation_status=citation_report["status"],
                     ),
-                    _step("render_fact_answer", format="markdown"),
                 ]
             )
             return {
@@ -293,6 +361,7 @@ class FinEvidenceOrchestrator:
                 "ticker": ticker,
                 "fiscal_year": fiscal_year,
                 "question_type": question_type,
+                "report_mode": active_report_mode,
                 "plan": plan,
                 "steps": steps,
                 "answer": answer,
@@ -304,6 +373,7 @@ class FinEvidenceOrchestrator:
                 "evidence_verification_report": evidence_verification_report,
                 "citation_report": citation_report,
                 "verifier_report": verifier_report,
+                "llm_report_result": llm_report_result,
                 "warnings": verifier_report["warnings"],
             }
 
@@ -315,8 +385,23 @@ class FinEvidenceOrchestrator:
                 top_k=top_k,
             )
             calculator_result = report_result.get("calculator_result", {})
+            llm_report_result = None
+            if active_report_mode == "llm":
+                llm_report_result = self._llm_answer(
+                    question=question,
+                    question_type=question_type,
+                    ticker=ticker,
+                    fiscal_year=fiscal_year,
+                    evidence=evidence_summary,
+                    calculations=calculator_result.get("calculations", []),
+                    warnings=calculator_result.get("warnings", []),
+                    fallback_report=report_result.get("report", ""),
+                )
+                answer = llm_report_result["report"]
+            else:
+                answer = report_result.get("report", "")
             verifier_report = self.verifier_agent.run(
-                answer=report_result.get("report", ""),
+                answer=answer,
                 calculations=calculator_result.get("calculations", []),
                 evidence=evidence_summary,
                 require_citations=True,
@@ -341,7 +426,7 @@ class FinEvidenceOrchestrator:
                         evidence_status=evidence_verification_report["status"],
                         citation_status=citation_report["status"],
                     ),
-                    _step("render_report", format="markdown"),
+                    _step("render_llm_report" if active_report_mode == "llm" else "render_report", format="markdown"),
                 ]
             )
             return {
@@ -350,9 +435,10 @@ class FinEvidenceOrchestrator:
                 "ticker": ticker,
                 "fiscal_year": fiscal_year,
                 "question_type": question_type,
+                "report_mode": active_report_mode,
                 "plan": plan,
                 "steps": steps,
-                "answer": report_result.get("report", ""),
+                "answer": answer,
                 "evidence": evidence_summary,
                 "claims": claims,
                 "calculations": calculator_result.get("calculations", []),
@@ -360,10 +446,24 @@ class FinEvidenceOrchestrator:
                 "evidence_verification_report": evidence_verification_report,
                 "citation_report": citation_report,
                 "verifier_report": verifier_report,
+                "llm_report_result": llm_report_result,
                 "warnings": warnings,
             }
 
-        answer = _evidence_answer(question, question_type, evidence)
+        rule_answer = _evidence_answer(question, question_type, evidence)
+        llm_report_result = None
+        if active_report_mode == "llm":
+            llm_report_result = self._llm_answer(
+                question=question,
+                question_type=question_type,
+                ticker=ticker,
+                fiscal_year=fiscal_year,
+                evidence=evidence_summary,
+                fallback_report=rule_answer,
+            )
+            answer = llm_report_result["report"]
+        else:
+            answer = rule_answer
         verifier_report = self.verifier_agent.run(
             answer=answer,
             evidence=evidence_summary,
@@ -376,7 +476,7 @@ class FinEvidenceOrchestrator:
         citation_report = verifier_report["citation_report"]
         steps.extend(
             [
-                _step("render_evidence_answer", format="markdown"),
+                _step("render_llm_report" if active_report_mode == "llm" else "render_evidence_answer", format="markdown"),
                 _step(
                     "run_verifier_agent",
                     status=verifier_report["status"],
@@ -393,6 +493,7 @@ class FinEvidenceOrchestrator:
             "ticker": ticker,
             "fiscal_year": fiscal_year,
             "question_type": question_type,
+            "report_mode": active_report_mode,
             "plan": plan,
             "steps": steps,
             "answer": answer,
@@ -403,6 +504,7 @@ class FinEvidenceOrchestrator:
             "evidence_verification_report": evidence_verification_report,
             "citation_report": citation_report,
             "verifier_report": verifier_report,
+            "llm_report_result": llm_report_result,
             "warnings": verifier_report["warnings"],
         }
 
@@ -415,10 +517,21 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, default=8, help="Number of evidence records or tables to inspect.")
     parser.add_argument("--text-chunks", default=DEFAULT_TEXT_CHUNKS_PATH, help="Path to text_chunks.jsonl.")
     parser.add_argument("--tables", default=DEFAULT_TABLE_CHUNKS_PATH, help="Path to table_chunks.jsonl.")
+    parser.add_argument("--report-mode", choices=sorted(REPORT_MODES), default=DEFAULT_REPORT_MODE, help="Use rule or LLM report generation.")
+    parser.add_argument("--llm-provider", default=None, help="LLM provider: openai, openai_compatible, or litellm.")
+    parser.add_argument("--llm-base-url", default=None, help="Base URL for OpenAI-compatible providers.")
+    parser.add_argument("--llm-model", default=None, help="Optional LLM model override for --report-mode llm.")
     parser.add_argument("--json", action="store_true", help="Print the full JSON payload.")
     args = parser.parse_args()
 
-    orchestrator = FinEvidenceOrchestrator.from_processed(args.text_chunks, args.tables)
+    orchestrator = FinEvidenceOrchestrator.from_processed(
+        args.text_chunks,
+        args.tables,
+        report_mode=args.report_mode,
+        llm_model=args.llm_model,
+        llm_provider=args.llm_provider,
+        llm_base_url=args.llm_base_url,
+    )
     result = orchestrator.run(
         args.question,
         ticker=args.ticker,

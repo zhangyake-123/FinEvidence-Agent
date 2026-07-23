@@ -1,6 +1,6 @@
 import unittest
 
-from finevidence.evaluation.ablation import compact_result, run_ablation, summary_result
+from finevidence.evaluation.ablation import SUPPORTED_MODES, compact_result, run_ablation, summary_result
 
 
 class AblationTest(unittest.TestCase):
@@ -56,6 +56,17 @@ class AblationTest(unittest.TestCase):
                 dataset_path="data/eval/qa_smoke.jsonl",
                 modes=["unknown_mode"],
             )
+
+    def test_llm_report_mode_is_supported_but_not_default(self) -> None:
+        self.assertIn("full_agent_llm_report", SUPPORTED_MODES)
+
+        result = run_ablation(
+            dataset_path="data/eval/qa_smoke.jsonl",
+            modes=None,
+            top_k=1,
+        )
+
+        self.assertNotIn("full_agent_llm_report", result["modes"])
 
 
 if __name__ == "__main__":

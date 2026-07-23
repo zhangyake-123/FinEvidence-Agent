@@ -26,6 +26,17 @@ class PlannerAgentTest(unittest.TestCase):
         self.assertEqual(plan["requested_calculations"], ["net_margin"])
         self.assertIsNone(plan["requested_periods"])
 
+    def test_plans_interval_improvement_question_as_trend(self) -> None:
+        plan = PlannerAgent().run(
+            "Between 2023 and 2025, in which year-over-year interval did Apple's gross margin increase the most?",
+            ticker="AAPL",
+            fiscal_year=2025,
+        )
+
+        self.assertEqual(plan["question_type"], "trend_analysis")
+        self.assertEqual(plan["requested_calculations"], ["gross_margin"])
+        self.assertIsNone(plan["requested_periods"])
+
     def test_plans_fact_question(self) -> None:
         plan = PlannerAgent().run("What was Microsoft revenue in 2025?", ticker="MSFT", fiscal_year=2025)
 

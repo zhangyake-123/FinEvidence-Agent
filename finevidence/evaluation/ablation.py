@@ -16,7 +16,15 @@ from finevidence.indexing.table_retriever import DEFAULT_TABLE_CHUNKS_PATH
 from finevidence.indexing.vector_index import VectorIndex
 
 
-SUPPORTED_MODES = ("text_only", "vector_text", "hybrid_retrieval", "hybrid_reranked", "full_agent")
+SUPPORTED_MODES = (
+    "text_only",
+    "vector_text",
+    "hybrid_retrieval",
+    "hybrid_reranked",
+    "full_agent",
+    "full_agent_llm_report",
+)
+DEFAULT_MODES = ("text_only", "vector_text", "hybrid_retrieval", "hybrid_reranked", "full_agent")
 
 
 def _preview_text(text: str, max_chars: int = 360) -> str:
@@ -144,7 +152,13 @@ def _retrieval_answer(question: str, mode: str, evidence: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def _baseline_prediction(mode: str, question: str, ticker: str | None, fiscal_year: int | None, evidence: list[dict]) -> dict:
+def _baseline_prediction(
+    mode: str,
+    question: str,
+    ticker: str | None,
+    fiscal_year: int | None,
+    evidence: list[dict],
+) -> dict:
     numeric_report = _empty_numeric_report()
     evidence_report = _empty_evidence_report()
     verifier_report = _empty_verifier_report()
@@ -205,12 +219,21 @@ class AblationRunner:
         cls,
         text_chunks_path: str | Path = DEFAULT_TEXT_CHUNKS_PATH,
         table_chunks_path: str | Path = DEFAULT_TABLE_CHUNKS_PATH,
+        llm_model: str | None = None,
+        llm_provider: str | None = None,
+        llm_base_url: str | None = None,
     ) -> "AblationRunner":
         return cls(
             text_index=BM25Index.from_jsonl(text_chunks_path),
             vector_index=VectorIndex.from_jsonl(text_chunks_path),
             retriever_agent=RetrieverAgent.from_processed(text_chunks_path, table_chunks_path),
-            orchestrator=FinEvidenceOrchestrator.from_processed(text_chunks_path, table_chunks_path),
+            orchestrator=FinEvidenceOrchestrator.from_processed(
+                text_chunks_path,
+                table_chunks_path,
+                llm_model=llm_model,
+                llm_provider=llm_provider,
+                llm_base_url=llm_base_url,
+            ),
         )
 
     def run_example(self, example: dict, mode: str, top_k: int = 5) -> dict:
@@ -228,6 +251,15 @@ class AblationRunner:
                 ticker=example.get("ticker"),
                 fiscal_year=example.get("fiscal_year"),
                 top_k=example.get("top_k", top_k),
+                report_mode="rule",
+            )
+        if mode == "full_agent_llm_report":
+            return self.orchestrator.run(
+                example["question"],
+                ticker=example.get("ticker"),
+                fiscal_year=example.get("fiscal_year"),
+                top_k=example.get("top_k", top_k),
+                report_mode="llm",
             )
         raise ValueError(f"Unsupported ablation mode: {mode}")
 
@@ -338,14 +370,23 @@ def run_ablation(
     text_chunks_path: str | Path = DEFAULT_TEXT_CHUNKS_PATH,
     table_chunks_path: str | Path = DEFAULT_TABLE_CHUNKS_PATH,
     top_k: int = 5,
+    llm_model: str | None = None,
+    llm_provider: str | None = None,
+    llm_base_url: str | None = None,
 ) -> dict:
     """Run selected ablation modes and return comparable evaluation reports."""
 
-    modes = modes or list(SUPPORTED_MODES)
+    modes = modes or list(DEFAULT_MODES)
     _validate_modes(modes)
 
     examples = load_eval_dataset(dataset_path)
-    runner = AblationRunner.from_processed(text_chunks_path, table_chunks_path)
+    runner = AblationRunner.from_processed(
+        text_chunks_path,
+        table_chunks_path,
+        llm_model=llm_model,
+        llm_provider=llm_provider,
+        llm_base_url=llm_base_url,
+    )
     records_by_mode: dict[str, list[dict]] = {mode: [] for mode in modes}
     summary_by_mode: dict[str, dict] = {}
 
@@ -423,13 +464,16 @@ def main() -> None:
     parser.add_argument(
         "--modes",
         nargs="+",
-        default=list(SUPPORTED_MODES),
+        default=list(DEFAULT_MODES),
         choices=SUPPORTED_MODES,
         help="Ablation modes to run.",
     )
     parser.add_argument("--text-chunks", default=DEFAULT_TEXT_CHUNKS_PATH, help="Path to text_chunks.jsonl.")
     parser.add_argument("--tables", default=DEFAULT_TABLE_CHUNKS_PATH, help="Path to table_chunks.jsonl.")
     parser.add_argument("--top-k", type=int, default=5, help="Default top-k retrieval setting.")
+    parser.add_argument("--llm-provider", default=None, help="LLM provider for full_agent_llm_report: openai, openai_compatible, or litellm.")
+    parser.add_argument("--llm-base-url", default=None, help="Base URL for OpenAI-compatible LLM providers.")
+    parser.add_argument("--llm-model", default=None, help="Optional LLM model override for full_agent_llm_report.")
     parser.add_argument("--output", default=None, help="Optional path to save full ablation JSON.")
     parser.add_argument("--records", action="store_true", help="Print compact per-example records.")
     parser.add_argument("--full", action="store_true", help="Print full records instead of compact records.")
@@ -441,6 +485,9 @@ def main() -> None:
         text_chunks_path=args.text_chunks,
         table_chunks_path=args.tables,
         top_k=args.top_k,
+        llm_model=args.llm_model,
+        llm_provider=args.llm_provider,
+        llm_base_url=args.llm_base_url,
     )
     if args.output:
         output_path = Path(args.output)

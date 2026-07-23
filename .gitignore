@@ -1,0 +1,18 @@
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+.DS_Store
+data/**/.DS_Store
+
+# Large downloaded external datasets should stay local.
+data/financebench/
+
+# Local scratch outputs.
+*.log
+tmp/
+scratch/
